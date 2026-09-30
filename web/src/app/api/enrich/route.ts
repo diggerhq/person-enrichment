@@ -1,33 +1,14 @@
-import { timingSafeEqual } from "node:crypto";
 import { runEnrichment } from "@/lib/agent";
+import { reserveEnrichment } from "@/lib/limits";
+import { clientIp } from "@/lib/client-ip";
 export const runtime = "nodejs";
 export const maxDuration = 180;
-const recent = new Map<string, number>();
 export async function POST(request: Request) {
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin)
     return Response.json(
       { error: "Request origin not allowed." },
       { status: 403 },
-    );
-  const secret = process.env.DEMO_ACCESS_TOKEN;
-  if (secret) {
-    const supplied =
-      request.headers.get("authorization")?.replace(/^Bearer /, "") || "";
-    const expected = Buffer.from(secret),
-      actual = Buffer.from(supplied);
-    if (expected.length !== actual.length || !timingSafeEqual(expected, actual))
-      return Response.json(
-        { error: "Enter the live demo access code to run this agent." },
-        { status: 401 },
-      );
-  } else if (process.env.VERCEL)
-    return Response.json(
-      {
-        error:
-          "Live lookups are disabled on this deployment. Deploy the template to run your own agent.",
-      },
-      { status: 503 },
     );
   let email: string;
   try {
@@ -41,15 +22,28 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  // A small per-instance throttle complements the access code; it is not a global quota.
-  const now = Date.now();
-  for (const [key, time] of recent) if (now - time > 60000) recent.delete(key);
-  if (recent.size >= 5 || recent.has(email))
+  let permit;
+  try {
+    permit = await reserveEnrichment(clientIp(request));
+  } catch {
     return Response.json(
-      { error: "Please wait a minute before starting another lookup." },
-      { status: 429, headers: { "Retry-After": "60" } },
+      {
+        error: "Enrichment is temporarily unavailable. Please try again later.",
+      },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
     );
-  recent.set(email, now);
+  }
+  if (!permit.allowed)
+    return Response.json(
+      { error: permit.error },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(permit.retryAfter),
+          "Cache-Control": "no-store",
+        },
+      },
+    );
   try {
     return Response.json(await runEnrichment(email), {
       headers: { "Cache-Control": "no-store" },
@@ -62,5 +56,13 @@ export async function POST(request: Request) {
       },
       { status: 502, headers: { "Cache-Control": "no-store" } },
     );
+  } finally {
+    await permit
+      .release()
+      .catch(() =>
+        console.warn(
+          "Enrichment lease release failed; it will expire automatically.",
+        ),
+      );
   }
 }

@@ -153,13 +153,10 @@ function Flow({ index }: { index: number }) {
 export default function Experience({
   deployUrl,
   repository,
-  gated,
 }: {
   deployUrl: string;
   repository: string;
-  gated: boolean;
 }) {
-  const [accessCode, setAccessCode] = useState("");
   const [active, setActive] = useState(0),
     [email, setEmail] = useState(""),
     [busy, setBusy] = useState(false),
@@ -182,7 +179,6 @@ export default function Experience({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(accessCode ? { Authorization: `Bearer ${accessCode}` } : {}),
         },
         body: JSON.stringify({ email }),
         signal: controller.current.signal,
@@ -247,13 +243,13 @@ export default function Experience({
           <div className="hero-grid">
             <div className="hero-copy">
               <h1>
-                GTM agents for
+                An email goes in.
                 <br />
-                <span>your next customer.</span>
+                <span>Context comes out.</span>
               </h1>
               <p>
-                Start with an email. Enrich a person. Put an agent behind the
-                workflows that grow your business.
+                Enter an email to find the person, role, and company behind it.
+                Build on this agent for the workflows that grow your business.
               </p>
               <ol className="hero-steps">
                 <li>
@@ -280,7 +276,7 @@ export default function Experience({
               </ol>
               <div className="hero-actions">
                 <a className="button" href="#playground">
-                  Try the agent <ArrowRight size={15} />
+                  Enrich an email <ArrowRight size={15} />
                 </a>
                 <a className="text-link" href={deployUrl || "#deploy"}>
                   Deploy the template ↗
@@ -290,182 +286,7 @@ export default function Experience({
                 Your managed API keys stay outside the runtime.
               </p>
             </div>
-            <div className="hero-example">
-              <div className="code-window">
-                <div className="code-chrome">
-                  <span className="traffic">
-                    <i />
-                    <i />
-                    <i />
-                  </span>
-                  <span>agent.ts</span>
-                </div>
-                <pre>
-                  <code>
-                    <span className="syntax-key">import</span>
-                    {" { useModel, useTool } "}
-                    <span className="syntax-key">from</span>
-                    {"\n  "}
-                    <span className="syntax-string">"@opencomputer/agent"</span>
-                    {";\n"}
-                    <span className="syntax-key">import</span>
-                    {" { enrichPerson } "}
-                    <span className="syntax-key">from</span>{" "}
-                    <span className="syntax-string">"./tools/treg.js"</span>
-                    {";\n\n"}
-                    <span className="syntax-key">
-                      export default function
-                    </span>{" "}
-                    <span className="syntax-fn">Agent</span>
-                    {"() {\n  "}
-                    <span className="syntax-fn">useModel</span>
-                    {"("}
-                    <span className="syntax-string">
-                      "anthropic/claude-sonnet-4.6"
-                    </span>
-                    {");\n  "}
-                    <span className="syntax-fn">useTool</span>
-                    {"(enrichPerson);\n  "}
-                    <span className="syntax-key">return</span>{" "}
-                    <span className="syntax-string">
-                      "Enrich the person from their email."
-                    </span>
-                    {";\n}"}
-                  </code>
-                </pre>
-              </div>
-              <div className="hero-terminal">
-                <code>
-                  <span>$</span> opencomputer deploy
-                </code>
-                <span>✓ Live</span>
-              </div>
-              <p>
-                A working enrichment agent. Powered by Treg, deployed on
-                OpenComputer.
-              </p>
-            </div>
-          </div>
-          <div className="workflow-intro">
-            <span className="section-kicker">START WITH A WORKING AGENT</span>
-            <h2>What will you automate first?</h2>
-            <p>One enrichment tool. A starting point for your GTM workflows.</p>
-          </div>
-          <div className="workflow-window" id="workflows">
-            <div className="window-top">
-              <span className="traffic">
-                <i />
-                <i />
-                <i />
-              </span>
-              <span>gtm / person-enrichment</span>
-              <span className="window-status">
-                <i className="dot" /> TEMPLATE
-              </span>
-            </div>
-            <div
-              className="workflow-tabs"
-              role="tablist"
-              aria-label="GTM workflows"
-            >
-              {workflows.map((w, i) => (
-                <button
-                  key={w.name}
-                  role="tab"
-                  id={`tab-${i}`}
-                  aria-selected={active === i}
-                  aria-controls="workflow-panel"
-                  onClick={() => setActive(i)}
-                  className={active === i ? "selected" : ""}
-                >
-                  <w.icon size={14} />
-                  {w.name}
-                </button>
-              ))}
-            </div>
-            <div
-              id="workflow-panel"
-              role="tabpanel"
-              aria-labelledby={`tab-${active}`}
-            >
-              <Flow index={active} />
-              <div className="flow-bottom">
-                <span>
-                  <Layers3 size={13} /> {workflow.detail}
-                </span>
-                <span className="mono">01 agent · endless possibilities</span>
-              </div>
-            </div>
-          </div>
-        </section>
-        <section className="work-section container">
-          <div className="section-kicker">BUILD ON THE TEMPLATE</div>
-          <div className="section-row">
-            <h2>{workflow.title}</h2>
-            <p>{workflow.description}</p>
-          </div>
-          <div className="benefit-grid">
-            <article>
-              <Globe2 size={21} />
-              <h3>One email. More context.</h3>
-              <p>
-                Name, role, company, and location — returned when available,
-                with a source and cost.
-              </p>
-            </article>
-            <article>
-              <Webhook size={21} />
-              <h3>Fits your existing flow.</h3>
-              <p>
-                Invoke from your app. Connect signup events, demo requests, or
-                CRM webhooks to your own workflow.
-              </p>
-            </article>
-            <article>
-              <Code2 size={21} />
-              <h3>A starting point you own.</h3>
-              <p>
-                Deploy the enrichment agent, then add your qualification rules,
-                destinations, and business logic.
-              </p>
-            </article>
-          </div>
-        </section>
-        <section className="playground-section" id="playground">
-          <div className="container playground-grid">
-            <div className="playground-copy">
-              <span className="section-kicker">MEET YOUR FIRST GTM AGENT</span>
-              <h2>
-                An email goes in.
-                <br />
-                <span>Context comes out.</span>
-              </h2>
-              <p>
-                Try a real lookup. The agent runs in the cloud and returns the
-                details the provider has on the person.
-              </p>
-              <ul>
-                <li>
-                  <ShieldCheck size={15} /> Credentials stay on the server
-                </li>
-                <li>
-                  <Check size={15} /> Unknown fields stay empty
-                </li>
-                <li>
-                  <Terminal size={15} /> Structured results, ready for your app
-                </li>
-              </ul>
-              <div className="powered">
-                <Mark /> Runs on OpenComputer
-                <span>
-                  Data through{" "}
-                  <a href="https://treg.to" target="_blank" rel="noreferrer">
-                    treg ↗
-                  </a>
-                </span>
-              </div>
-            </div>
-            <div className="demo-card">
+            <div className="demo-card" id="playground">
               <div className="card-title">
                 <span>
                   <Mail size={15} /> Person enrichment
@@ -498,23 +319,8 @@ export default function Experience({
                     <span>{busy ? "Enriching" : "Enrich"}</span>
                   </button>
                 </div>
-                {gated && (
-                  <div className="access-field">
-                    <label htmlFor="access-code">Live demo access code</label>
-                    <input
-                      id="access-code"
-                      type="password"
-                      value={accessCode}
-                      onChange={(e) => setAccessCode(e.target.value)}
-                      placeholder="Provided by the demo owner"
-                      required
-                      autoComplete="off"
-                      disabled={busy}
-                    />
-                  </div>
-                )}
                 <p className="form-note">
-                  One person per lookup. Results depend on provider coverage.
+                  Free to try. 100 lookups per day · up to 5 running per IP.
                 </p>
               </form>
               <div className="result-area" aria-live="polite" aria-busy={busy}>
@@ -646,7 +452,7 @@ export default function Experience({
                     <span className="empty-icon">
                       <Layers3 size={23} />
                     </span>
-                    <h3>Get to know your next customer.</h3>
+                    <h3>Get to know Context comes out.</h3>
                     <p>
                       Enter an email to see a sourced person profile.
                       <br />
@@ -668,6 +474,90 @@ export default function Experience({
                 </span>
               </div>
             </div>
+          </div>
+          <div className="workflow-intro">
+            <span className="section-kicker">START WITH A WORKING AGENT</span>
+            <h2>What will you automate first?</h2>
+            <p>One enrichment tool. A starting point for your GTM workflows.</p>
+          </div>
+          <div className="workflow-window" id="workflows">
+            <div className="window-top">
+              <span className="traffic">
+                <i />
+                <i />
+                <i />
+              </span>
+              <span>gtm / person-enrichment</span>
+              <span className="window-status">
+                <i className="dot" /> TEMPLATE
+              </span>
+            </div>
+            <div
+              className="workflow-tabs"
+              role="tablist"
+              aria-label="GTM workflows"
+            >
+              {workflows.map((w, i) => (
+                <button
+                  key={w.name}
+                  role="tab"
+                  id={`tab-${i}`}
+                  aria-selected={active === i}
+                  aria-controls="workflow-panel"
+                  onClick={() => setActive(i)}
+                  className={active === i ? "selected" : ""}
+                >
+                  <w.icon size={14} />
+                  {w.name}
+                </button>
+              ))}
+            </div>
+            <div
+              id="workflow-panel"
+              role="tabpanel"
+              aria-labelledby={`tab-${active}`}
+            >
+              <Flow index={active} />
+              <div className="flow-bottom">
+                <span>
+                  <Layers3 size={13} /> {workflow.detail}
+                </span>
+                <span className="mono">01 agent · endless possibilities</span>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section className="work-section container">
+          <div className="section-kicker">BUILD ON THE TEMPLATE</div>
+          <div className="section-row">
+            <h2>{workflow.title}</h2>
+            <p>{workflow.description}</p>
+          </div>
+          <div className="benefit-grid">
+            <article>
+              <Globe2 size={21} />
+              <h3>One email. More context.</h3>
+              <p>
+                Name, role, company, and location — returned when available,
+                with a source and cost.
+              </p>
+            </article>
+            <article>
+              <Webhook size={21} />
+              <h3>Fits your existing flow.</h3>
+              <p>
+                Invoke from your app. Connect signup events, demo requests, or
+                CRM webhooks to your own workflow.
+              </p>
+            </article>
+            <article>
+              <Code2 size={21} />
+              <h3>A starting point you own.</h3>
+              <p>
+                Deploy the enrichment agent, then add your qualification rules,
+                destinations, and business logic.
+              </p>
+            </article>
           </div>
         </section>
         <section className="container deployment" id="deploy">

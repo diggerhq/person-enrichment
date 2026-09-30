@@ -4,11 +4,5 @@ export default function Page() {
   const deployUrl = repository
     ? `https://app.opencomputer.dev/new?repository-url=${encodeURIComponent(repository)}`
     : "";
-  return (
-    <Experience
-      deployUrl={deployUrl}
-      repository={repository}
-      gated={Boolean(process.env.DEMO_ACCESS_TOKEN)}
-    />
-  );
+  return <Experience deployUrl={deployUrl} repository={repository} />;
 }

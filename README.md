@@ -76,4 +76,13 @@ npm run dev
 
 Open http://localhost:3012. The API creates a session for the deployed OpenComputer agent, waits for the JSON result, and ends the session. Set `OPENCOMPUTER_API_KEY` and `OC_AGENT_ID` server-side. No Treg credential is needed in the web app. Set `TEMPLATE_REPOSITORY_URL` to the published repository URL to activate the one-click deploy button.
 
-Hosted live demos require `DEMO_ACCESS_TOKEN`; visitors enter this code before running a lookup. Without it, Vercel deployments disable paid lookups. The access code is accompanied by a small per-instance throttle, not a global usage quota. The signup/CRM/notification connectors remain integration work for users deploying their own copy.
+The public demo accepts emails without an access code. A shared PostgreSQL store enforces a global limit of **100 admitted requests per UTC day** and **5 concurrent requests per IP**, across every server instance and deployment. Failed admitted requests still count toward the daily cap to bound spend. Invalid emails and limit rejections do not consume slots. Slots are released in `finally`; abandoned leases expire after 240 seconds, beyond the 180-second route lifetime. IPs are taken from Vercel's trusted forwarded header and stored only as HMAC hashes. If the store is unavailable, the API returns 503 without starting an agent.
+
+Set `GTM_DATABASE_URL` server-side, then initialize the isolated schema:
+
+```sh
+node --env-file=web/.env.local --import tsx scripts/setup-limits.ts
+node --env-file=web/.env.local --import tsx scripts/check-shared-limits.ts
+```
+
+The second command runs concurrent admission tests in temporary isolated scopes and cleans them up. It makes no paid enrichment calls. The database function takes a transaction-scoped advisory lock before checking and reserving both allowances. Run schema setup before deploying a fresh copy of the UI. The signup/CRM/notification connectors remain integration work for users deploying their own agent.

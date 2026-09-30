@@ -1383,3 +1383,46 @@ footer > div {
     transition: none;
   }
 }
+
+/* The live email form is the first action, including on small screens. */
+.hero-grid {
+  align-items: start;
+}
+.hero-grid > .demo-card {
+  margin-top: 0;
+}
+#playground {
+  scroll-margin-top: 20px;
+}
+@media (max-width: 760px) {
+  .hero-grid {
+    display: flex;
+    flex-direction: column;
+  }
+  .hero-copy {
+    display: contents;
+  }
+  .hero-copy h1 {
+    order: 0;
+    margin-bottom: 0;
+  }
+  .hero-copy > p:not(.hero-caption) {
+    order: 1;
+    margin-top: -17px;
+  }
+  .hero-grid > .demo-card {
+    order: 2;
+    width: 100%;
+  }
+  .hero-steps {
+    order: 3;
+    margin: 0;
+  }
+  .hero-actions {
+    order: 4;
+  }
+  .hero-caption {
+    order: 5;
+    margin-top: -19px !important;
+  }
+}

@@ -1,14 +1,14 @@
 schema = 1
 
 [template]
-name = "Person Enrichment"
-description = "Give the agent an email address and get a sourced person profile through Treg."
+name = "Signup Qualification"
+description = "Qualify an email against your ideal customer profile. Get a sourced profile, fit assessment, reasons, and suggested next step."
 documentation = "https://github.com/diggerhq/person-enrichment#readme"
 default_project_name = "person-enrichment"
 
 [template.first_run]
 agent = "enricher"
-prompt = "Introduce yourself and ask me which email address to enrich. Do not run an enrichment until I provide an email."
+prompt = "Introduce yourself, describe the configured ICP, and ask which email to qualify. Do not run an enrichment until I provide an email."
 
 [template.secrets.TREG_API_KEY]
 description = "Treg organization API token. Create one in your Treg account; enrichment requires available credits or a connected provider key."
@@ -19,3 +19,8 @@ required = true
 description = "Organization slug required for Treg identity tokens; leave empty for organization tokens."
 required = false
 example = "your-team"
+
+[template.runtime_variables.ICP]
+description = "Describe your ideal customer. Role, industry, company size, and geography all work. Paste the target you used in the demo."
+required = false
+example = "Engineering leaders at software companies."

@@ -1,3 +1,4 @@
+import { validateQualification } from "./qualification";
 import { randomUUID } from "node:crypto";
 const API = process.env.OPENCOMPUTER_API_URL || "https://app.opencomputer.dev";
 type Event = { seq: number; type: string; data: Record<string, unknown> };
@@ -16,7 +17,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     );
   return response.json();
 }
-export async function runEnrichment(email: string) {
+export async function runEnrichment(email: string, icp: string) {
   const created = await request<{ session: { id: string } }>("/sessions", {
     method: "POST",
     body: JSON.stringify({
@@ -40,7 +41,7 @@ export async function runEnrichment(email: string) {
           await request(`/sessions/${id}/turns`, {
             method: "POST",
             body: JSON.stringify({
-              input: `Enrich this one email: ${email}. Return only the JSON result.`,
+              input: JSON.stringify({ email, icp }),
               idempotencyKey: randomUUID(),
             }),
           });
@@ -72,15 +73,7 @@ export async function runEnrichment(email: string) {
           } catch {
             throw new Error("The agent returned an unexpected response.");
           }
-          if (
-            !["found", "not_found", "error"].includes(result?.status) ||
-            result?.email !== email ||
-            !result?.source ||
-            (result.status === "found" &&
-              (!result.person || !result.person.location))
-          )
-            throw new Error("The agent returned an incomplete result.");
-          return result;
+          return validateQualification(result, email, icp);
         }
       }
       await new Promise((resolve) => setTimeout(resolve, 800));

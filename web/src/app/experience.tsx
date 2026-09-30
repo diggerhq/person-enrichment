@@ -22,40 +22,25 @@ import {
   Zap,
 } from "lucide-react";
 
-type Profile = {
-  status: "found" | "not_found" | "error";
-  email: string;
-  person: null | {
-    name: string | null;
-    title: string | null;
-    linkedin_url: string | null;
-    location: {
-      city: string | null;
-      region: string | null;
-      country: string | null;
-    };
-    company: null | {
-      name: string | null;
-      domain: string | null;
-      industry: string | null;
-      employee_count: number | null;
-    };
-  };
-  source: { cost_usd: number | null; call_id: string | null } | null;
-  error: { message: string } | null;
-};
+import {
+  DEFAULT_ICP,
+  FIT_LABELS,
+  MAX_ICP_LENGTH,
+  type Profile,
+} from "@/lib/qualification";
+
 const workflows = [
   {
     icon: Zap,
-    name: "Signup enrichment",
+    name: "Signup qualification",
     event: "user.created",
     title: "Every signup has a story.",
     description:
       "Turn a new email address into a person, a company, and a little more context. Give your team a head start.",
     destination: "User database",
-    output: "Profile enriched",
+    output: "Profile + fit assessment",
     detail:
-      "Connect your signup event, enrich the email, then write the returned fields to your user record.",
+      "Connect your signup event, qualify the person against your ICP, then save the assessment to your user record.",
     code: '{ "event": "user.created",\n  "email": "alex@acme.com" }',
   },
   {
@@ -130,7 +115,7 @@ function Flow({ index }: { index: number }) {
           <Mark />
         </span>
         <small>02 / AGENT</small>
-        <strong>Person enrichment</strong>
+        <strong>Lead qualification</strong>
         <span>
           <i className="dot" /> OpenComputer + Treg
         </span>
@@ -157,6 +142,9 @@ export default function Experience({
   deployUrl: string;
   repository: string;
 }) {
+  const [icp, setIcp] = useState(DEFAULT_ICP);
+  const [showTarget, setShowTarget] = useState(false);
+  const [targetCopied, setTargetCopied] = useState(false);
   const [active, setActive] = useState(0),
     [email, setEmail] = useState(""),
     [busy, setBusy] = useState(false),
@@ -180,13 +168,14 @@ export default function Experience({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, icp: icp.trim() || DEFAULT_ICP }),
         signal: controller.current.signal,
       });
       const body = await response.json();
-      if (!response.ok)
+      if (!response.ok || body.status === "error")
         throw new Error(
-          body.error || "The agent could not finish. Please try again.",
+          (typeof body.error === "string" ? body.error : body.error?.message) ||
+            "The agent could not finish. Please try again.",
         );
       setResult(body);
     } catch (e) {
@@ -205,6 +194,14 @@ export default function Experience({
       setTimeout(() => setCopied(false), 2000);
     } catch {
       setError("Clipboard unavailable. Select the text to copy it.");
+    }
+  }
+  async function copyTarget(target = icp.trim() || DEFAULT_ICP) {
+    try {
+      await navigator.clipboard.writeText(target);
+      setTargetCopied(true);
+    } catch {
+      setTargetCopied(false);
     }
   }
   const command = repository
@@ -233,7 +230,15 @@ export default function Experience({
               Docs <ArrowUpRight size={12} />
             </a>
           </nav>
-          <a className="button small outline" href={deployUrl || "#deploy"}>
+          <a
+            className="button small outline"
+            href={deployUrl || "#deploy"}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => {
+              void copyTarget();
+            }}
+          >
             Deploy template <ArrowUpRight size={13} />
           </a>
         </div>
@@ -243,27 +248,27 @@ export default function Experience({
           <div className="hero-grid">
             <div className="hero-copy">
               <h1>
-                An email goes in.
+                Who’s your next
                 <br />
-                <span>Context comes out.</span>
+                <span>customer?</span>
               </h1>
               <p>
-                Enter an email to find the person, role, and company behind it.
-                Build on this agent for the workflows that grow your business.
+                One email. A sourced profile. A clear assessment against your
+                ideal customer — with reasons, not guesses.
               </p>
               <ol className="hero-steps">
                 <li>
                   <span>01</span>
                   <div>
-                    <h2>Enrich it.</h2>
+                    <h2>Know the person.</h2>
                     <p>A person, a role, and a company from one email.</p>
                   </div>
                 </li>
                 <li>
                   <span>02</span>
                   <div>
-                    <h2>Connect it.</h2>
-                    <p>Your signup event, demo form, or CRM webhook.</p>
+                    <h2>Find the fit.</h2>
+                    <p>Compare their role and company with your target.</p>
                   </div>
                 </li>
                 <li>
@@ -276,9 +281,17 @@ export default function Experience({
               </ol>
               <div className="hero-actions">
                 <a className="button" href="#playground">
-                  Enrich an email <ArrowRight size={15} />
+                  Qualify a lead <ArrowRight size={15} />
                 </a>
-                <a className="text-link" href={deployUrl || "#deploy"}>
+                <a
+                  className="text-link"
+                  href={deployUrl || "#deploy"}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => {
+                    void copyTarget();
+                  }}
+                >
                   Deploy the template ↗
                 </a>
               </div>
@@ -289,7 +302,7 @@ export default function Experience({
             <div className="demo-card" id="playground">
               <div className="card-title">
                 <span>
-                  <Mail size={15} /> Person enrichment
+                  <Mail size={15} /> Is this person a fit?
                 </span>
                 <span className="live-label">
                   <i className="dot" /> LIVE AGENT
@@ -316,9 +329,44 @@ export default function Experience({
                     ) : (
                       <ArrowRight size={16} />
                     )}
-                    <span>{busy ? "Enriching" : "Enrich"}</span>
+                    <span>{busy ? "Qualifying" : "Qualify lead"}</span>
                   </button>
                 </div>
+                <div className="target-summary">
+                  <p>
+                    <span>Looking for:</span> {icp.trim() || DEFAULT_ICP}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowTarget(!showTarget)}
+                    aria-expanded={showTarget}
+                    aria-controls="target-editor"
+                    disabled={busy}
+                  >
+                    {showTarget ? "Done" : "Change target"}
+                  </button>
+                </div>
+                {showTarget && (
+                  <div className="target-editor" id="target-editor">
+                    <label htmlFor="icp">Describe your ideal customer</label>
+                    <textarea
+                      id="icp"
+                      value={icp}
+                      maxLength={MAX_ICP_LENGTH}
+                      onChange={(e) => {
+                        setIcp(e.target.value);
+                        setTargetCopied(false);
+                      }}
+                      disabled={busy}
+                      rows={3}
+                      placeholder="Founders or engineering leaders at US software companies with 10–200 employees."
+                    />
+                    <p>
+                      Include a role, industry, company size, or location.
+                      Missing facts stay unknown.
+                    </p>
+                  </div>
+                )}
                 <p className="form-note">
                   Free to try. 100 lookups per day · up to 5 running per IP.
                 </p>
@@ -331,7 +379,7 @@ export default function Experience({
                     </span>
                     <h3>Your agent is on it.</h3>
                     <p>
-                      Starting its computer and looking up the person.
+                      Enriching the profile and checking your target.
                       <br />
                       The first run can take a minute.
                     </p>
@@ -341,96 +389,162 @@ export default function Experience({
                     <strong>Couldn’t complete this lookup</strong>
                     <p>{error}</p>
                   </div>
-                ) : result?.status === "found" && result.person ? (
+                ) : result?.qualification ? (
                   <>
-                    <div className="profile-heading">
-                      <span className="avatar">
-                        {result.person.name
-                          ?.split(" ")
-                          .map((s) => s[0])
-                          .slice(0, 2)
-                          .join("") || "?"}
+                    <div className="assessment">
+                      <span className={`fit-label ${result.qualification.fit}`}>
+                        {FIT_LABELS[result.qualification.fit]}
                       </span>
-                      <div>
-                        <h3>{result.person.name || "Name not returned"}</h3>
+                      {result.person && (
+                        <div className="lead-identity">
+                          <h3>{result.person.name || result.email}</h3>
+                          <p>
+                            {result.person.title || "Role not returned"}
+                            {result.person.company?.name
+                              ? ` at ${result.person.company.name}`
+                              : ""}
+                          </p>
+                        </div>
+                      )}
+                      <p className="assessment-summary">
+                        {result.qualification.summary}
+                      </p>
+                      {result.qualification.reasons.length > 0 && (
+                        <ul className="fit-reasons">
+                          {result.qualification.reasons
+                            .slice(0, 3)
+                            .map((reason, i) => (
+                              <li key={i}>
+                                <Check size={13} />
+                                <span>{reason}</span>
+                              </li>
+                            ))}
+                        </ul>
+                      )}
+                      <div className="fit-unknowns">
+                        <span>Unknown</span>
                         <p>
-                          {result.person.title || "Role not returned"}
-                          {result.person.company?.name
-                            ? ` at ${result.person.company.name}`
-                            : ""}
+                          {result.qualification.unknowns.slice(0, 3).join(" ")}
                         </p>
                       </div>
-                      <span className="matched">
-                        <Check size={11} /> Matched
-                      </span>
+                      <div className="next-action">
+                        <span>Suggested next step</span>
+                        <p>{result.qualification.next_action}</p>
+                      </div>
                     </div>
-                    <dl>
-                      <div>
-                        <dt>Company</dt>
-                        <dd>{result.person.company?.name || "Not returned"}</dd>
-                      </div>
-                      <div>
-                        <dt>Location</dt>
-                        <dd>
-                          {[
-                            result.person.location.city,
-                            result.person.location.country,
-                          ]
-                            .filter(Boolean)
-                            .join(", ") || "Not returned"}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>Company size</dt>
-                        <dd>
-                          {result.person.company?.employee_count
-                            ? `${result.person.company.employee_count.toLocaleString()} employees`
-                            : "Not returned"}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>Domain</dt>
-                        <dd>
-                          {result.person.company?.domain || "Not returned"}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>LinkedIn</dt>
-                        <dd>
-                          {result.person.linkedin_url &&
-                          /^https?:\/\/(www\.)?linkedin\.com\//i.test(
-                            result.person.linkedin_url,
-                          ) ? (
-                            <a
-                              href={result.person.linkedin_url}
-                              target="_blank"
-                              rel="noreferrer"
+                    <details className="profile-details">
+                      <summary>View details</summary>
+                      <dl>
+                        <div>
+                          <dt>Target used</dt>
+                          <dd>{result.icp}</dd>
+                        </div>
+                        <div>
+                          <dt>Company</dt>
+                          <dd>
+                            {result.person?.company?.name || "Not returned"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Location</dt>
+                          <dd>
+                            {[
+                              result.person?.location.city,
+                              result.person?.location.country,
+                            ]
+                              .filter(Boolean)
+                              .join(", ") || "Not returned"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Company size</dt>
+                          <dd>
+                            {result.person?.company?.employee_count != null
+                              ? `${result.person.company.employee_count.toLocaleString()} employees`
+                              : "Not returned"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Industry</dt>
+                          <dd>
+                            {result.person?.company?.industry || "Not returned"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Domain</dt>
+                          <dd>
+                            {result.person?.company?.domain || "Not returned"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>LinkedIn</dt>
+                          <dd>
+                            {result.person?.linkedin_url &&
+                            /^https?:\/\/(www\.)?linkedin\.com\//i.test(
+                              result.person.linkedin_url,
+                            ) ? (
+                              <a
+                                href={result.person.linkedin_url}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                View profile ↗
+                              </a>
+                            ) : (
+                              "Not returned"
+                            )}
+                          </dd>
+                        </div>
+                      </dl>
+                      <div className="criteria-details">
+                        {result.qualification.criteria.map((criterion, i) => (
+                          <div key={i}>
+                            <span
+                              className={`criterion-result ${criterion.result}`}
                             >
-                              View profile ↗
-                            </a>
-                          ) : (
-                            "Not returned"
-                          )}
-                        </dd>
+                              {criterion.result}
+                            </span>
+                            <strong>{criterion.criterion}</strong>
+                            <p>{criterion.explanation}</p>
+                          </div>
+                        ))}
                       </div>
-                    </dl>
-                    <div className="result-meta">
-                      <span>
-                        Treg / Apollo
-                        {result.source?.cost_usd != null
-                          ? ` · $${result.source.cost_usd.toFixed(3)}`
-                          : ""}
-                      </span>
-                      <button onClick={() => setJson(!json)}>
-                        {json ? "Hide JSON" : "View JSON"}
-                        <Code2 size={12} />
-                      </button>
+                      <div className="result-meta">
+                        <span>
+                          Treg / Apollo
+                          {result.source?.cost_usd != null
+                            ? ` · $${result.source.cost_usd.toFixed(3)}`
+                            : ""}
+                        </span>
+                        <button onClick={() => setJson(!json)}>
+                          {json ? "Hide JSON" : "View JSON"}
+                          <Code2 size={12} />
+                        </button>
+                      </div>
+                      {json && (
+                        <pre className="json-output">
+                          {JSON.stringify(result, null, 2)}
+                        </pre>
+                      )}
+                    </details>
+                    <div className="result-deploy">
+                      <a
+                        className="button"
+                        href={deployUrl || "#deploy"}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={() => {
+                          void copyTarget(result.icp);
+                        }}
+                      >
+                        Deploy this agent <ArrowUpRight size={13} />
+                      </a>
+                      <p>
+                        {targetCopied
+                          ? "Target copied. Paste it into the ICP field during deployment."
+                          : "Your account. Your Treg key. This target is copied when you deploy."}
+                      </p>
                     </div>
-                    {json && (
-                      <pre className="json-output">
-                        {JSON.stringify(result, null, 2)}
-                      </pre>
-                    )}
                   </>
                 ) : result ? (
                   <div className="empty-state">
@@ -452,17 +566,17 @@ export default function Experience({
                     <span className="empty-icon">
                       <Layers3 size={23} />
                     </span>
-                    <h3>Get to know Context comes out.</h3>
+                    <h3>Get to know your next customer.</h3>
                     <p>
-                      Enter an email to see a sourced person profile.
+                      Enter an email to see how they fit your target.
                       <br />
-                      No research tabs required.
+                      No signup or setup required.
                     </p>
                     <div className="empty-fields">
-                      <span>Name</span>
-                      <span>Role</span>
-                      <span>Company</span>
-                      <span>Location</span>
+                      <span>Fit</span>
+                      <span>Reasons</span>
+                      <span>Unknowns</span>
+                      <span>Next step</span>
                     </div>
                   </div>
                 )}
@@ -478,7 +592,10 @@ export default function Experience({
           <div className="workflow-intro">
             <span className="section-kicker">START WITH A WORKING AGENT</span>
             <h2>What will you automate first?</h2>
-            <p>One enrichment tool. A starting point for your GTM workflows.</p>
+            <p>
+              Enrich, assess, and suggest the next step. Make this agent part of
+              your GTM workflows.
+            </p>
           </div>
           <div className="workflow-window" id="workflows">
             <div className="window-top">
@@ -575,6 +692,9 @@ export default function Experience({
             <a
               className="button"
               href={deployUrl || "https://app.opencomputer.dev"}
+              onClick={() => {
+                void copyTarget();
+              }}
               target="_blank"
               rel="noreferrer"
             >
@@ -588,6 +708,21 @@ export default function Experience({
             </p>
           </div>
           <div className="deploy-panel">
+            <div className="deploy-target">
+              <span>Your target</span>
+              <p>{icp.trim() || DEFAULT_ICP}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  void copyTarget();
+                }}
+              >
+                {targetCopied
+                  ? "Copied — paste into ICP during deployment"
+                  : "Copy target for deployment"}
+                <Copy size={13} />
+              </button>
+            </div>
             <div className="deploy-step">
               <span>01</span>
               <div>

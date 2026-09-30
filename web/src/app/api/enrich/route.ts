@@ -1,3 +1,4 @@
+import { normalizeIcp } from "@/lib/qualification";
 import { runEnrichment } from "@/lib/agent";
 import { reserveEnrichment } from "@/lib/limits";
 import { clientIp } from "@/lib/client-ip";
@@ -11,14 +12,23 @@ export async function POST(request: Request) {
       { status: 403 },
     );
   let email: string;
+  let icp: string;
   try {
     const body = await request.json();
+    if (!body || typeof body !== "object" || Array.isArray(body))
+      throw new Error("Enter one valid email address.");
+    icp = normalizeIcp(body.icp);
     email = typeof body.email === "string" ? body.email.trim() : "";
     if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-      throw new Error();
-  } catch {
+      throw new Error("Enter one valid email address.");
+  } catch (error) {
     return Response.json(
-      { error: "Enter one valid email address." },
+      {
+        error:
+          error instanceof Error && error.message
+            ? error.message
+            : "Enter one valid email address.",
+      },
       { status: 400 },
     );
   }
@@ -45,7 +55,7 @@ export async function POST(request: Request) {
       },
     );
   try {
-    return Response.json(await runEnrichment(email), {
+    return Response.json(await runEnrichment(email, icp), {
       headers: { "Cache-Control": "no-store" },
     });
   } catch (error) {

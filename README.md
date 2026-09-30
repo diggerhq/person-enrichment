@@ -1,8 +1,8 @@
-# Person Enrichment
+# Signup Qualification
 
 [Live GTM workflow UI](https://gtm-enrichment-agent.vercel.app) · [Deploy the template](https://app.opencomputer.dev/new?repository-url=https%3A%2F%2Fgithub.com%2Fdiggerhq%2Fperson-enrichment)
 
-An OpenComputer serverless agent that accepts one email address and enriches the person through [Treg](https://treg.to/), using its `apollo.people.enrich` catalog endpoint. Returns name, role, employer, company details, location and LinkedIn URL when present, plus the Treg call ID and actual cost. Unknown fields remain `null`.
+An OpenComputer serverless agent that accepts one email address, enriches the person, and assesses fit against your ideal customer profile (ICP). Enrichment runs through [Treg](https://treg.to/), using its `apollo.people.enrich` catalog endpoint. Returns name, role, employer, company details, location and LinkedIn URL when present, plus the Treg call ID and actual cost. Unknown fields remain `null`.
 
 ## Deploy as a template
 
@@ -20,7 +20,7 @@ https://app.opencomputer.dev/new?repository-url=https%3A%2F%2Fgithub.com%2Fdigge
 
 Deployment asks each user for their own **TREG_API_KEY**. Use an organization token from Treg, or supply an identity token and set `TREG_ORG` to your organization slug. The secret is injected into the `X-Treg-Token` header by the OpenComputer connection, restricted to `https://treg.to`; it is not included in prompts or source. The first run asks for an email before making a paid lookup.
 
-The template deploys the enrichment agent. External trigger and destination integrations are configured separately.
+The template deploys the qualification agent. Set the optional **ICP** field to your target customer description; the default is “Engineering leaders at software companies.” The demo’s deploy button copies your chosen target so you can paste it into this field. External trigger and destination integrations are configured separately.
 
 ## Deploy from this directory
 
@@ -42,7 +42,9 @@ npx opencomputer session 'Enrich jane@example.com'
 
 The example address above is a placeholder: replace it with the person you want to enrich. Configure the secret again with `--environment production` when deploying the production alias.
 
-You can also use the OpenComputer playground. Text input can be a bare email or a sentence containing one email. Programmatic turns can supply `{ "email": "jane@example.com" }` as their payload.
+You can also use the OpenComputer playground. Text input can be a bare email or a sentence containing one email. Programmatic turns can supply `{ "email": "jane@example.com", "icp": "Engineering leaders at UK software companies with 10–200 employees." }` as their payload. A supplied ICP replaces the default target.
+
+The result adds `qualification`: an evidence-backed `strong_fit`, `possible_fit`, `low_fit`, or `insufficient_data` verdict, criteria, summary, and suggested next action. Missing facts stay unknown. Buying intent is never inferred from enrichment, and API errors are not classified as poor fits.
 
 ## Behavior and costs
 
@@ -65,7 +67,7 @@ Live enrichment has been verified with Treg and the deployed OpenComputer agent.
 
 ## GTM workflow UI
 
-`web/` contains a Next.js UI based on the OpenComputer site's design. It includes interactive signup, inbound qualification, CRM and trial workflow examples, a live enrichment form, and a template deployment section. The examples explain the integrations you add; only person enrichment is included out of the box.
+`web/` contains a Next.js UI based on the OpenComputer site's design. It includes interactive signup, inbound qualification, CRM and trial workflow examples, an email-first qualification form, and a template deployment section. The examples explain the integrations you add; person enrichment and ICP assessment are included out of the box. Users can try the default target immediately or expand “Change target” to enter their own. Profile details and JSON stay collapsed until requested.
 
 ```sh
 cd web
@@ -74,7 +76,7 @@ npm ci
 npm run dev
 ```
 
-Open http://localhost:3012. The API creates a session for the deployed OpenComputer agent, waits for the JSON result, and ends the session. Set `OPENCOMPUTER_API_KEY` and `OC_AGENT_ID` server-side. No Treg credential is needed in the web app. Set `TEMPLATE_REPOSITORY_URL` to the published repository URL to activate the one-click deploy button.
+Open http://localhost:3012. The API creates a session for the deployed OpenComputer agent, waits for the JSON result, validates criterion evidence against the returned profile, and ends the session. Set `OPENCOMPUTER_API_KEY` and `OC_AGENT_ID` server-side. No Treg credential is needed in the web app. Set `TEMPLATE_REPOSITORY_URL` to the published repository URL to activate the one-click deploy button.
 
 The public demo accepts emails without an access code. A shared PostgreSQL store enforces a global limit of **100 admitted requests per UTC day** and **5 concurrent requests per IP**, across every server instance and deployment. Failed admitted requests still count toward the daily cap to bound spend. Invalid emails and limit rejections do not consume slots. Slots are released in `finally`; abandoned leases expire after 240 seconds, beyond the 180-second route lifetime. IPs are taken from Vercel's trusted forwarded header and stored only as HMAC hashes. If the store is unavailable, the API returns 503 without starting an agent.
 

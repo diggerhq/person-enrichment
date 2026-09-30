@@ -1,0 +1,21 @@
+schema = 1
+
+[template]
+name = "Person Enrichment"
+description = "Give the agent an email address and get a sourced person profile through Treg."
+documentation = "https://github.com/diggerhq/person-enrichment#readme"
+default_project_name = "person-enrichment"
+
+[template.first_run]
+agent = "enricher"
+prompt = "Introduce yourself and ask me which email address to enrich. Do not run an enrichment until I provide an email."
+
+[template.secrets.TREG_API_KEY]
+description = "Treg organization API token. Create one in your Treg account; enrichment requires available credits or a connected provider key."
+documentation = "https://treg.to/"
+required = true
+
+[template.runtime_variables.TREG_ORG]
+description = "Organization slug required for Treg identity tokens; leave empty for organization tokens."
+required = false
+example = "your-team"

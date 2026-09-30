@@ -1,0 +1,10 @@
+node_modules/
+.opencomputer/
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+web/.next/
+web/.vercel/

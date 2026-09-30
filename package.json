@@ -1,0 +1,25 @@
+{
+  "name": "person-enrichment-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "check:template": "opencomputer template validate .",
+    "deploy": "opencomputer deploy",
+    "session": "opencomputer session"
+  },
+  "dependencies": {
+    "@opencomputer/agent": "0.7.5"
+  },
+  "devDependencies": {
+    "@opencomputer/cli": "0.7.13",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0",
+    "tsx": "^4.20.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

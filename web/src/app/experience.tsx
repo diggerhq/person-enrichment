@@ -222,7 +222,6 @@ export default function Experience({
       <header>
         <div className="nav">
           <a className="wordmark" href="https://opencomputer.dev">
-            <Mark />
             opencomputer
             <span className="nav-divider" />
             <span className="nav-tag">GTM agents</span>
@@ -245,38 +244,112 @@ export default function Experience({
       </header>
       <main id="main">
         <section className="hero">
-          <div className="eyebrow-pill">
-            <i className="dot" /> A GTM engineering agent. Ready to work.
-            <ChevronRight size={12} />
+          <div className="hero-grid">
+            <div className="hero-copy">
+              <h1>
+                GTM agents for
+                <br />
+                <span>your next customer.</span>
+              </h1>
+              <p>
+                Start with an email. Enrich a person. Put an agent behind the
+                workflows that grow your business.
+              </p>
+              <ol className="hero-steps">
+                <li>
+                  <span>01</span>
+                  <div>
+                    <h2>Enrich it.</h2>
+                    <p>A person, a role, and a company from one email.</p>
+                  </div>
+                </li>
+                <li>
+                  <span>02</span>
+                  <div>
+                    <h2>Connect it.</h2>
+                    <p>Your signup event, demo form, or CRM webhook.</p>
+                  </div>
+                </li>
+                <li>
+                  <span>03</span>
+                  <div>
+                    <h2>Deploy it.</h2>
+                    <p>Your own serverless agent. Your rules and next steps.</p>
+                  </div>
+                </li>
+              </ol>
+              <div className="hero-actions">
+                <a className="button" href="#playground">
+                  Try the agent <ArrowRight size={15} />
+                </a>
+                <a className="text-link" href={deployUrl || "#deploy"}>
+                  Deploy the template ↗
+                </a>
+              </div>
+              <p className="hero-caption">
+                Your managed API keys stay outside the runtime.
+              </p>
+            </div>
+            <div className="hero-example">
+              <div className="code-window">
+                <div className="code-chrome">
+                  <span className="traffic">
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                  <span>agent.ts</span>
+                </div>
+                <pre>
+                  <code>
+                    <span className="syntax-key">import</span>
+                    {" { useModel, useTool } "}
+                    <span className="syntax-key">from</span>
+                    {"\n  "}
+                    <span className="syntax-string">"@opencomputer/agent"</span>
+                    {";\n"}
+                    <span className="syntax-key">import</span>
+                    {" { enrichPerson } "}
+                    <span className="syntax-key">from</span>{" "}
+                    <span className="syntax-string">"./tools/treg.js"</span>
+                    {";\n\n"}
+                    <span className="syntax-key">
+                      export default function
+                    </span>{" "}
+                    <span className="syntax-fn">Agent</span>
+                    {"() {\n  "}
+                    <span className="syntax-fn">useModel</span>
+                    {"("}
+                    <span className="syntax-string">
+                      "anthropic/claude-sonnet-4.6"
+                    </span>
+                    {");\n  "}
+                    <span className="syntax-fn">useTool</span>
+                    {"(enrichPerson);\n  "}
+                    <span className="syntax-key">return</span>{" "}
+                    <span className="syntax-string">
+                      "Enrich the person from their email."
+                    </span>
+                    {";\n}"}
+                  </code>
+                </pre>
+              </div>
+              <div className="hero-terminal">
+                <code>
+                  <span>$</span> opencomputer deploy
+                </code>
+                <span>✓ Live</span>
+              </div>
+              <p>
+                A working enrichment agent. Powered by Treg, deployed on
+                OpenComputer.
+              </p>
+            </div>
           </div>
-          <h1>
-            Your next signup.
-            <br />
-            <span>Your next opportunity.</span>
-          </h1>
-          <p>
-            Turn an email into context. Put an agent behind your GTM workflows.
-            <br className="desktop" /> Start with enrichment. Make it your own.
-            Ship it to production.
-          </p>
-          <div className="hero-actions">
-            <a className="button" href="#playground">
-              Try the enrichment agent <ArrowRight size={15} />
-            </a>
-            <a className="text-link" href={deployUrl || "#deploy"}>
-              Deploy your own <ArrowUpRight size={15} />
-            </a>
-          </div>
-          <div className="hero-notes">
-            <span>
-              <Check size={12} /> Serverless on OpenComputer
-            </span>
-            <span>
-              <Check size={12} /> Enrichment through Treg
-            </span>
-            <span>
-              <Check size={12} /> Your keys. Your workflow.
-            </span>
+          <div className="workflow-intro">
+            <span className="section-kicker">START WITH A WORKING AGENT</span>
+            <h2>What will you automate first?</h2>
+            <p>One enrichment tool. A starting point for your GTM workflows.</p>
           </div>
           <div className="workflow-window" id="workflows">
             <div className="window-top">
@@ -326,7 +399,7 @@ export default function Experience({
           </div>
         </section>
         <section className="work-section container">
-          <div className="section-kicker">A LITTLE CONTEXT GOES A LONG WAY</div>
+          <div className="section-kicker">BUILD ON THE TEMPLATE</div>
           <div className="section-row">
             <h2>{workflow.title}</h2>
             <p>{workflow.description}</p>
@@ -599,7 +672,7 @@ export default function Experience({
         </section>
         <section className="container deployment" id="deploy">
           <div>
-            <span className="section-kicker">FROM A DEMO TO YOUR WORKFLOW</span>
+            <span className="section-kicker">GET STARTED</span>
             <h2>
               Make it yours.
               <br />

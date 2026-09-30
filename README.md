@@ -1,5 +1,7 @@
 # Person Enrichment
 
+[Live GTM workflow UI](https://gtm-enrichment-agent.vercel.app) · [Deploy the template](https://app.opencomputer.dev/new?repository-url=https%3A%2F%2Fgithub.com%2Fdiggerhq%2Fperson-enrichment)
+
 An OpenComputer serverless agent that accepts one email address and enriches the person through [Treg](https://treg.to/), using its `apollo.people.enrich` catalog endpoint. Returns name, role, employer, company details, location and LinkedIn URL when present, plus the Treg call ID and actual cost. Unknown fields remain `null`.
 
 ## Deploy as a template
@@ -59,7 +61,7 @@ Treg/provider charges and OpenComputer model/runtime charges are separate. Curre
 - `oc-template.toml`: reusable deployment metadata and required key.
 - `tests/enrichment.test.ts`: offline provider-contract and failure-path checks.
 
-Live enrichment requires your Treg key and has not been verified until a real request succeeds. `.env.example` provides an optional local location for sharing the key during setup; the deployed agent uses OpenComputer secrets, not dotenv.
+Live enrichment has been verified with Treg and the deployed OpenComputer agent. Your own deployment requires your Treg key. `.env.example` provides an optional local location for sharing the key during setup; the deployed agent uses OpenComputer secrets, not dotenv.
 
 ## GTM workflow UI
 
